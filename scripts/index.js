@@ -24,7 +24,7 @@ function createCard(cardData, deleteCardFunction) {
 // @todo: Функция удаления карточки
 // В шаблоне карточек уже добавлена иконка удаления, при клике по ней выбранная карточка должна удаляться со страницы
 function deleteCard(evt) {
-  const card = evt.target.parentElement;
+  const card = evt.target.closest('.card');
   card.remove();
 }
 
