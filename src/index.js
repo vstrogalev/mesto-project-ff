@@ -1,10 +1,13 @@
-// @todo: Темплейт карточки
+import './pages/index.css';
+import initialCards from './cards';
+
+// Темплейт карточки
 const cardTemplate = document.querySelector('#card-template').content;
 
-// @todo: DOM узлы
+// DOM узлы
 const placesList = document.querySelector('.places__list');
 
-// @todo: Функция создания карточки
+// Функция создания карточки
 // функция, которая принимает в аргументах данные одной карточки и функцию-колбэк для удаления, а возвращает подготовленный к выводу элемент карточки
 // клонировать шаблон,
 // установить значения вложенных элементов,
@@ -21,14 +24,14 @@ function createCard(cardData, deleteCardFunction) {
   return card;
 }
 
-// @todo: Функция удаления карточки
+// Функция удаления карточки
 // В шаблоне карточек уже добавлена иконка удаления, при клике по ней выбранная карточка должна удаляться со страницы
 function deleteCard(evt) {
   const card = evt.target.closest('.card');
   card.remove();
 }
 
-// @todo: Вывести карточки на страницу
+// Вывести карточки на страницу
 // вывод всех карточек из массива на страницу в элемент .places__list
 function renderCards() {
   initialCards.forEach(card => {
