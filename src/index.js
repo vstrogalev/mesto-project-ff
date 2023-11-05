@@ -1,43 +1,113 @@
 import './pages/index.css';
-import initialCards from './cards';
+import { createCard, deleteCard, likeCard } from './components/card';
+import { openModal, closeModal } from './components/modal';
+import initialCards from './components/cards';
 
-// Темплейт карточки
-const cardTemplate = document.querySelector('#card-template').content;
+// ul где отображаются карточки
+export const placesList = document.querySelector('.places__list');
 
-// DOM узлы
-const placesList = document.querySelector('.places__list');
+// кнопка редактирования профиля
+const editProfileButton = document.querySelector('.profile__edit-button');
 
-// Функция создания карточки
-// функция, которая принимает в аргументах данные одной карточки и функцию-колбэк для удаления, а возвращает подготовленный к выводу элемент карточки
-// клонировать шаблон,
-// установить значения вложенных элементов,
-// добавить к иконке удаления обработчик клика, по которому будет вызван переданный в аргументах колбэк.
+// обработка редактирования профиля
+editProfileButton.addEventListener('click', function () {
+  const editProfileModalWindow = document.querySelector('.popup.popup_type_edit');
 
-function createCard(cardData, deleteCardFunction) {
-  const card = cardTemplate.cloneNode(true);
+  openModal(editProfileModalWindow);
 
-  card.querySelector('.card__image').src = cardData.link;
-  card.querySelector('.card__image').alt = cardData.name;
-  card.querySelector('.card__title').textContent = cardData.name;
-  card.querySelector('.card__delete-button').addEventListener('click', deleteCardFunction);
+  // имя и занятие на странице в области профиля
+  const profileName = document.querySelector('.profile__title')
+  const profileDescription = document.querySelector('.profile__description')
 
-  return card;
+  // Находим форму на модальном окне
+  const formElement = editProfileModalWindow.querySelector('form');
+
+  // Прикрепляем обработчик к форме:
+  formElement.addEventListener('submit', handleFormSubmit);
+
+  // имя и занятие не форме
+  const nameInput = formElement.querySelector('.popup__input_type_name');
+  const jobInput = formElement.querySelector('.popup__input_type_description');
+
+  // заполняем форму данными из профиля со страницы
+  nameInput.value = profileName.textContent;
+  jobInput.value = profileDescription.textContent;
+
+  // Обработчик «отправки» формы при редактировании профиля
+  function handleFormSubmit(evt) {
+    evt.preventDefault();
+
+    // Получите значение полей jobInput и nameInput из свойства value
+    profileName.textContent = nameInput.value;
+    profileDescription.textContent = jobInput.value;
+
+    closeModal(editProfileModalWindow);
+    formElement.removeEventListener('submit', handleFormSubmit);
+  }
+
+});
+
+// кнопка добавления карточки
+const addCardButton = document.querySelector('.profile__add-button');
+
+// окно добавления карточки
+const addCardWindow = document.querySelector('.popup.popup_type_new-card');
+
+// обработчик добавления карточки
+addCardButton.addEventListener('click', function () {
+  openModal(addCardWindow);
+
+  // Находим форму на модальном окне
+  const formElement = addCardWindow.querySelector('form');
+
+  // Прикрепляем обработчик к форме:
+  formElement.addEventListener('submit', handleFormSubmit);
+
+  // Обработчик «отправки» формы при добавлении карточки
+  function handleFormSubmit(evt) {
+    evt.preventDefault();
+
+    // имя и занятие не форме
+    const nameInput = formElement.querySelector('.popup__input_type_card-name');
+    const urlInput = formElement.querySelector('.popup__input_type_url');
+
+    // создаем объект карточку на основе значений полей jobInput и nameInput из свойства value
+    const card = {
+      name: nameInput.value,
+      link: urlInput.value
+    }
+
+    initialCards.unshift(card);
+
+    closeModal(addCardWindow);
+
+    placesList.prepend(createCard(card, deleteCard, likeCard, handleImageClick));
+
+    formElement.reset();
+    formElement.removeEventListener('submit', handleFormSubmit);
+  }
+});
+
+function handleImageClick(cardData) {
+  // окно для просмотра изображения карточки
+  const imagePopup = document.querySelector('.popup.popup_type_image');
+
+  const image = imagePopup.querySelector('.popup__image');
+  image.src = cardData.link;
+  image.alt = cardData.name;
+
+  const description = imagePopup.querySelector('.popup__caption');
+  description.textContent = cardData.name;
+
+  openModal(imagePopup);
 }
 
-// Функция удаления карточки
-// В шаблоне карточек уже добавлена иконка удаления, при клике по ней выбранная карточка должна удаляться со страницы
-function deleteCard(evt) {
-  const card = evt.target.closest('.card');
-  card.remove();
-}
-
-// Вывести карточки на страницу
 // вывод всех карточек из массива на страницу в элемент .places__list
 function renderCards() {
   initialCards.forEach(card => {
-    placesList.append(createCard(card, deleteCard));
+    placesList.append(createCard(card, deleteCard, likeCard, handleImageClick));
   });
 }
 
-// отображаем на странице
-renderCards();
+// Вывести карточки на страницу
+renderCards()
