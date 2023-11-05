@@ -8,16 +8,21 @@ const cardTemplate = document.querySelector('#card-template').content;
 // функция создания карточки переиспользуется при добавлении карточек из массива и при добавлении новых карточек через модальное окно.
 
 export function createCard(cardData, deleteFunction, likeFunction, imageExpandFunction) {
-  const card = cardTemplate.cloneNode(true);
+  const card = getCardTemplate();
 
-  card.querySelector('.card__image').src = cardData.link;
-  card.querySelector('.card__image').alt = cardData.name;
+  const cardImage = card.querySelector('.card__image');
+  cardImage.src = cardData.link;
+  cardImage.alt = cardData.name;
   card.querySelector('.card__title').textContent = cardData.name;
   card.querySelector('.card__delete-button').addEventListener('click', deleteFunction);
   card.querySelector('.card__like-button').addEventListener('click', likeFunction);
   card.querySelector('.card__image').addEventListener('click', () => imageExpandFunction(cardData));
 
   return card;
+}
+
+function getCardTemplate() {
+  return cardTemplate.cloneNode(true);
 }
 
 // Функция удаления карточки
