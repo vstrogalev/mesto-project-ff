@@ -18,8 +18,10 @@ function handleCloseModalOnOverlay(evt) {
 
 // обработчик зарытия модального окна при нажатии на Esc
 function handleCloseModalByEsc(evt) {
-  const modalWindow = document.querySelector('.popup_is-opened');
-  if (evt.key === "Escape") closeModal(modalWindow);
+  if (evt.key === "Escape") {
+    const modalWindow = document.querySelector('.popup_is-opened');
+    closeModal(modalWindow)
+  };
 }
 
 export function closeModal(modalWindow) {
