@@ -21,6 +21,8 @@ const nameInput = formElement.querySelector('.popup__input_type_name');
 const jobInput = formElement.querySelector('.popup__input_type_description');
 // Прикрепляем обработчик к форме:
 formElement.addEventListener('submit', submitEditProfileForm);
+// Устанавливаем обработчик закрытия окна по крестику
+handleCloseModalByCross(editProfileModalWindow);
 
 // Обработчик «отправки» формы при редактировании профиля
 function submitEditProfileForm(evt) {
@@ -31,14 +33,11 @@ function submitEditProfileForm(evt) {
   profileDescription.textContent = jobInput.value;
 
   closeModal(editProfileModalWindow);
-  formElement.removeEventListener('submit', submitEditProfileForm);
 }
 
 // обработка редактирования профиля
 editProfileButton.addEventListener('click', function () {
   openModal(editProfileModalWindow);
-
-  handleCloseModalByCross(editProfileModalWindow);
 
   // заполняем форму данными из профиля со страницы
   nameInput.value = profileName.textContent;
@@ -58,6 +57,8 @@ const urlInput = addCardForm.querySelector('.popup__input_type_url');
 
 // Прикрепляем обработчик к форме:
 addCardForm.addEventListener('submit', submitAddCardForm);
+// Устанавливаем обработчик закрытия окна по крестику
+handleCloseModalByCross(addCardWindow);
 
 // Обработчик «отправки» формы при добавлении карточки
 function submitAddCardForm(evt) {
@@ -74,14 +75,11 @@ function submitAddCardForm(evt) {
   placesList.prepend(createCard(card, deleteCard, likeCard, handleImageClick));
 
   addCardForm.reset();
-  addCardForm.removeEventListener('submit', submitAddCardForm);
 }
 
 // обработчик добавления карточки
 addCardButton.addEventListener('click', function () {
   openModal(addCardWindow);
-
-  handleCloseModalByCross(addCardWindow);
 });
 
 // окно для просмотра изображения карточки
@@ -90,6 +88,8 @@ const imagePopup = document.querySelector('.popup.popup_type_image');
 const image = imagePopup.querySelector('.popup__image');
 // находим p для записи в него текста описания картинки
 const imageDescription = imagePopup.querySelector('.popup__caption');
+// Устанавливаем обработчик закрытия окна по крестику
+handleCloseModalByCross(imagePopup);
 
 // обработчик раскрытия изображения в попап окне
 function handleImageClick(cardData) {
@@ -100,7 +100,6 @@ function handleImageClick(cardData) {
   imageDescription.textContent = cardData.name;
 
   openModal(imagePopup);
-  handleCloseModalByCross(imagePopup);
 }
 
 // обработчик зарытия модального окна по клику на закрывающий крекстик
