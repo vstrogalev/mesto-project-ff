@@ -5,10 +5,22 @@
   -moz-border-radius: 50%;
   border-radius: 50%;
   background-size: cover;
-  /*Ковер тут симпатичнее контейна*/
   background-position: center;
   margin: 0 29px 0 0;
-  /*Макет очень кривоват, как считать этот отступ я хз. Проявите тут лояльность пока что*/
+}
+
+.profile__image:hover .profile__image-overlay {
+  display: grid;
+}
+
+.profile__image-overlay {
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.80);
+  display: none;
 }
 
 @media screen and (max-width: 740px) {

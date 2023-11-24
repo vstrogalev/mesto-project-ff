@@ -1,0 +1,14 @@
+.card__like {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.card__like-counter {
+  color: #000;
+
+  text-align: center;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: normal;
+}
