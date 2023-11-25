@@ -69,14 +69,14 @@ export const deleteCardFromServer = (cardId) => {
     method: 'DELETE',
     headers: config.headers
   })
-    .then(res => {
-      if (res.ok) {
-        return res.json();
-      }
+    // .then(res => {
+    //   if (res.ok) {
+    //     return res.json();
+    //   }
 
-      // если ошибка, отклоняем промис
-      return Promise.reject(`Ошибка удаления карточки: ${res.status}`);
-    });
+    //   // если ошибка, отклоняем промис
+    //   return Promise.reject(`Ошибка удаления карточки: ${res.status}`);
+    // });
 }
 
 export const setLikeCard = (cardId, like) => {
@@ -110,4 +110,19 @@ export const uploadAvatar = (link) => {
       // если ошибка, отклоняем промис
       return Promise.reject(`Ошибка загрузки аватара: ${res.status}`);
     });
+}
+
+export const checkUrl = (link) => {
+  return fetch(link, {
+    method: 'HEAD'
+  })
+    .then(res => {
+      if (res.ok) {
+        return res.headers.get('Content-Type') === 'image/jpg';
+      }
+
+      // если ошибка (res !== 'ok'), отклоняем промис
+      return Promise.reject(`Ошибка проверки ссылки аватара: ${res.status}`);
+    })
+    .catch(() => Promise.reject(`Ошибка проверки типа ссылки аватара`));
 }

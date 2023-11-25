@@ -36,9 +36,9 @@ export function createCard(cardData, deleteFunction, likeFunction, imageExpandFu
   // кнопка удаления карточки
   const cardDeleteButton = cardTemplate.querySelector('.card__delete-button');
 
-  // показываем ее и навешиваем обработчки, если id создателя карточки === id пользователя
+  // показываем кнопку удаления, если id создателя карточки === id пользователя
   if (cardData.owner._id === userId) {
-    cardDeleteButton.addEventListener('click', deleteFunction);
+    cardDeleteButton.addEventListener('click', (evt) => deleteFunction(evt));
   } else {
     // скрываем кнопку удаления карточки, если карточка создана не пользователем
     cardDeleteButton.classList.add('card__delete-button_inactive');
@@ -56,14 +56,25 @@ function getCardTemplate() {
 
 // Функция удаления карточки
 // В шаблоне карточек уже добавлена иконка удаления, при клике по ней выбранная карточка должна удаляться со страницы
-export function deleteCard(evt) {
-  const card = evt.target.closest('.card');
+export function deleteCard(cardToDeleteId) {
 
-  // получаем id карточки из дата атрибута и удаляем ее с сервера по id
-  deleteCardFromServer(card.dataset.id);
+  // удаляем карточку на сервере, затем на странице
+  deleteCardFromServer(cardToDeleteId)
+  .then(res => {
 
-  // удаляем карточку со страницы
-  card.remove();
+    if (res.ok) {
+      console.log(res.json());
+      // удаляем карточку со страницы
+      const card = document.querySelector(`.card[data-id="${cardToDeleteId}"]`);
+      card.remove();
+      }
+    else {console.log(`Ошибка удаления карточки: ${res.status}`)}
+    })
+    .catch(err => {
+      // если ошибка
+      console.log(`Ошибка удаления карточки: ${err}`);
+    })
+
 }
 
 // функция лайка карточки

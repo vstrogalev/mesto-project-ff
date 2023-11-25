@@ -2,7 +2,7 @@ import './index.css';
 import { createCard, deleteCard, likeCard } from '../components/card';
 import { openModal, closeModal } from '../components/modal';
 import { enableValidation, clearValidation } from '../components/validation';
-import { getInitialCards, getUser, setUserInfo, uploadCard, uploadAvatar } from '../components/api';
+import { getInitialCards, getUser, setUserInfo, uploadCard, uploadAvatar, checkUrl } from '../components/api';
 import { showInputError } from '../components/validation';
 
 // ********************************
@@ -35,7 +35,7 @@ Promise.all([getUser(), getInitialCards()]).then(res => {
 // вывод всех карточек из массива на страницу в элемент .places__list
 function renderCards(userId) {
   initialCards.forEach(card => {
-    placesList.append(createCard(card, deleteCard, likeCard, handleImageClick, userId));
+    placesList.append(createCard(card, handleDeleteCardBtn, likeCard, handleImageClick, userId));
   });
 }
 
@@ -87,7 +87,7 @@ function submitChangeAvatarForm(evt) {
   // меняем сообщение в кнопке на Сохранение...
   popupAvatarButton.textContent = 'Сохранение...';
 
-  checkUrlAvatar(urlAvatar.value)
+  checkUrl(urlAvatar.value)
     .then(() => {
 
       // выгружаем ссылку на сервер, получаем подтверждение, закрываем окно, отображаем аватар, полученную как подтверждение от сервера
@@ -105,6 +105,9 @@ function submitChangeAvatarForm(evt) {
         });
     })
     .catch(() => {
+      // восстановим текст кнопки сохранения формы
+      popupAvatarButton.textContent = 'Сохранить';
+
       showInputError(formAvatar, urlAvatar, 'Введите URL картинки', validationConfig)
     });
 }
@@ -116,22 +119,6 @@ avatar.addEventListener('click', function () {
   // очистим валидацию формы
   clearValidation(changeAvatarModalWindow, validationConfig);
 });
-
-const checkUrlAvatar = (link) => {
-  return fetch(link, {
-    method: 'HEAD'
-  })
-    .then(res => {
-      if (res.ok) {
-        return res.headers.get('Content-Type') === 'image/jpg';
-      }
-
-      // если ошибка (res !== 'ok'), отклоняем промис
-      return Promise.reject(`Ошибка проверки ссылки аватара: ${res.status}`);
-    })
-    .catch(() => Promise.reject(`Ошибка проверки типа ссылки аватара`));
-}
-
 
 
 
@@ -219,31 +206,36 @@ function submitAddCardForm(evt) {
   // меняем текст кнопки на Сохранение...
   popupCardButton.textContent = 'Сохранение...';
 
-  // создаем объект карточку на основе значений полей urlInput и description из свойства value
-  const card = {
-    name: description.value,
-    link: urlInput.value
-  }
+  checkUrl(urlInput.value)
+    .then(() => {
+      // создаем объект карточку на основе значений полей urlInput и description из свойства value
+      const card = {
+        name: description.value,
+        link: urlInput.value
+      }
 
-  // выгружаем карточку на сервер, закрываем окно, отображаем карточку, полученную как подтверждение от сервера на страницу
-  uploadCard(card).then(cardUploaded => {
-    closeModal(addCardWindow);
+      // выгружаем карточку на сервер, закрываем окно, отображаем карточку, полученную как подтверждение от сервера на страницу
+      uploadCard(card).then(cardUploaded => {
+        closeModal(addCardWindow);
 
-    // восстанавливаем текст кнопки на Сохранить
-    popupCardButton.textContent = 'Сохранить';
+        // восстанавливаем текст кнопки на Сохранить
+        popupCardButton.textContent = 'Сохранить';
 
-    placesList.prepend(
-      createCard(
-        cardUploaded,
-        deleteCard,
-        likeCard,
-        handleImageClick,
-        userId
-      )
-    );
+        placesList.prepend(
+          createCard(
+            cardUploaded,
+            handleDeleteCardBtn, // deleteCard
+            likeCard,
+            handleImageClick,
+            userId
+          )
+        );
 
-    addCardForm.reset();
-  });
+        addCardForm.reset();
+      });
+    }).catch(() => {
+      showInputError(addCardForm, urlInput, 'Введите URL картинки', validationConfig)
+    })
 }
 
 // обработчик открытия окна добавления карточки
@@ -280,6 +272,39 @@ function handleImageClick(cardData) {
   openModal(imagePopup);
 }
 
+
+
+// ********************************
+// обработка подтверждения удаления карточки через попап
+
+// окно для просмотра изображения карточки
+const deletePopup = document.querySelector('.popup.popup_type_delete-card');
+// Устанавливаем обработчик закрытия окна по крестику
+handleCloseModalByCross(deletePopup);
+// ставим слушатель на закрытие с подтверждением
+deletePopup.addEventListener('submit', submitDeleteCardForm);
+// кнопка подтверждения удаления
+const deleteCardButton = deletePopup.querySelector('.popup__button');
+
+function handleDeleteCardBtn(evt) {
+  // получим id карточки, которую собираемся удалить
+  const cardToDeleteId = evt.target.closest('.card').dataset.id;
+  // и поместим его в дата атрибут кнопки закрытия попапа
+  deleteCardButton.dataset.cardId = cardToDeleteId;
+  // открываем попап
+  openModal(deletePopup);
+}
+
+function submitDeleteCardForm(evt) {
+  const cardToDeleteId = evt.target.querySelector('.popup__button').dataset.cardId;
+
+  // удаляем карточку на сервере
+  deleteCard(cardToDeleteId);
+
+  closeModal(deletePopup);
+}
+
+
 // обработчик зарытия модального окна по клику на закрывающий крекстик
 function handleCloseModalByCross(modalWindow) {
   const popupCloseButton = modalWindow.querySelector('.popup__close');
@@ -288,5 +313,3 @@ function handleCloseModalByCross(modalWindow) {
     closeModal(modalWindow);
   })
 }
-
-

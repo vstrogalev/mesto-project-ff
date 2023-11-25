@@ -1,7 +1,12 @@
 // модуль работы с модальными окнами
 
 export function openModal(modalWindow) {
-  modalWindow.classList.add('popup_is-opened');
+  modalWindow.classList.add('popup_is-animated');
+
+  setTimeout(() => {
+    modalWindow.classList.add('popup_is-opened');
+  }, 0);
+
 
   // слушатель зарытия модального окна по клику на оверлей
   modalWindow.addEventListener('click', handleCloseModalOnOverlay)
@@ -26,6 +31,10 @@ function handleCloseModalByEsc(evt) {
 
 export function closeModal(modalWindow) {
   modalWindow.classList.remove('popup_is-opened');
+
+  setTimeout(() => {
+    modalWindow.classList.remove('popup_is-animated');
+  }, 600);
 
   modalWindow.removeEventListener('click', handleCloseModalOnOverlay);
   document.removeEventListener('keydown', handleCloseModalByEsc);

@@ -8,3 +8,7 @@
 .popup__form-field {
   position: relative;
 }
+
+.popup__form_delete {
+  margin-top: unset;
+}
