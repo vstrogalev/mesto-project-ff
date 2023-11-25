@@ -69,14 +69,6 @@ export const deleteCardFromServer = (cardId) => {
     method: 'DELETE',
     headers: config.headers
   })
-    // .then(res => {
-    //   if (res.ok) {
-    //     return res.json();
-    //   }
-
-    //   // если ошибка, отклоняем промис
-    //   return Promise.reject(`Ошибка удаления карточки: ${res.status}`);
-    // });
 }
 
 export const setLikeCard = (cardId, like) => {

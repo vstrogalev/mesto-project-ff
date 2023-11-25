@@ -11,3 +11,6 @@ JavaScript, webpack
 
 #Link to github repo
 https://github.com/vstrogalev/mesto-project-ff
+
+#Link to github pages
+https://vstrogalev.github.io/mesto-project-ff/
