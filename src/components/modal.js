@@ -17,8 +17,7 @@ export function openModal(modalWindow) {
 
 // обработчик зарытия модального окна по клику на оверлей
 function handleCloseModalOnOverlay(evt) {
-  const modalWindow = document.querySelector('.popup_is-opened');
-  if (evt.target === modalWindow) closeModal(modalWindow);
+  if (evt.target === evt.currentTarget) closeModal(evt.currentTarget);
 }
 
 // обработчик зарытия модального окна при нажатии на Esc

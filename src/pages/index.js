@@ -1,8 +1,14 @@
 import './index.css';
-import { createCard, deleteCard, likeCard } from '../components/card';
+import { createCard, likeCard } from '../components/card';
 import { openModal, closeModal } from '../components/modal';
 import { enableValidation, clearValidation } from '../components/validation';
-import { getInitialCards, getUser, setUserInfo, uploadCard, uploadAvatar, checkUrl } from '../components/api';
+import {
+  getInitialCards,
+  getUser,
+  setUserInfo,
+  uploadCard,
+  uploadAvatar,
+  deleteCardFromServer } from '../components/api';
 import { showInputError } from '../components/validation';
 
 // ********************************
@@ -11,29 +17,31 @@ import { showInputError } from '../components/validation';
 // ul где отображаются карточки
 const placesList = document.querySelector('.places__list');
 
-// массив карточек
-let initialCards = [];
-
 // id пользователя
 let userId;
 
+const profileImage = document.querySelector('.profile__image'),
+      profileName = document.querySelector('.profile__title'),
+      profileDescription = document.querySelector('.profile__description');
+
 // ждем информацию по пользователю и карточкам с сервера, чтобы только после этого отобразить их
-Promise.all([getUser(), getInitialCards()]).then(res => {
-  initialCards = res[1];
-  document.querySelector('.profile__image').style.backgroundImage = `url(${res[0].avatar})`;
+Promise.all([getUser(), getInitialCards()])
+  .then(res => {
+    profileImage.style.backgroundImage = `url(${res[0].avatar})`;
 
-  document.querySelector('.profile__title').textContent = res[0].name;
-  document.querySelector('.profile__description').textContent = res[0].about;
+    profileName.textContent = res[0].name;
+    profileDescription.textContent = res[0].about;
 
-  // заполняем id пользователя от сервера
-  userId = res[0]._id;
+    // заполняем id пользователя от сервера
+    userId = res[0]._id;
 
-  // Вывести карточки на страницу
-  renderCards(userId)
-})
+    // Вывести карточки на страницу
+    renderCards(userId, res[1]);
+  })
+  .catch(err => console.log(`Ошибка загрузки данных (карточки и профиль) с сервера ${err}`));
 
 // вывод всех карточек из массива на страницу в элемент .places__list
-function renderCards(userId) {
+function renderCards(userId, initialCards) {
   initialCards.forEach(card => {
     placesList.append(createCard(card, handleDeleteCardBtn, likeCard, handleImageClick, userId));
   });
@@ -87,30 +95,26 @@ function submitChangeAvatarForm(evt) {
   // меняем сообщение в кнопке на Сохранение...
   popupAvatarButton.textContent = 'Сохранение...';
 
-  checkUrl(urlAvatar.value)
-    .then(() => {
+  // выгружаем ссылку на сервер, получаем подтверждение, закрываем окно, отображаем аватар, полученную как подтверждение от сервера
+  uploadAvatar(urlAvatar.value)
+    .then(avatarUploaded => {
+      closeModal(changeAvatarModalWindow);
 
-      // выгружаем ссылку на сервер, получаем подтверждение, закрываем окно, отображаем аватар, полученную как подтверждение от сервера
-      uploadAvatar(urlAvatar.value)
-        .then(avatarUploaded => {
-          closeModal(changeAvatarModalWindow);
 
-          // восстановим текст кнопки сохранения формы
-          popupAvatarButton.textContent = 'Сохранить';
+      // меняем аватар
+      avatar.style.backgroundImage = `url(${avatarUploaded.avatar})`;
 
-          // меняем аватар
-          avatar.style.backgroundImage = `url(${avatarUploaded.avatar})`;
-
-          formAvatar.reset();
-        });
+      formAvatar.reset();
     })
     .catch(() => {
+      showInputError(formAvatar, urlAvatar, 'Введите URL картинки', validationConfig)
+    })
+    .finally(() => {
       // восстановим текст кнопки сохранения формы
       popupAvatarButton.textContent = 'Сохранить';
-
-      showInputError(formAvatar, urlAvatar, 'Введите URL картинки', validationConfig)
     });
 }
+
 
 // обработка редактирования профиля
 avatar.addEventListener('click', function () {
@@ -144,9 +148,7 @@ editProfileButton.addEventListener('click', function () {
 const editProfileModalWindow = document.querySelector('.popup.popup_type_edit');
 // Находим форму на модальном окне
 const formElement = editProfileModalWindow.querySelector('form');
-// имя и занятие на странице в области профиля
-const profileName = document.querySelector('.profile__title')
-const profileDescription = document.querySelector('.profile__description')
+
 // имя и занятие не форме
 const nameInput = formElement.querySelector('.popup__input_type_name');
 const jobInput = formElement.querySelector('.popup__input_type_description');
@@ -154,24 +156,31 @@ const jobInput = formElement.querySelector('.popup__input_type_description');
 formElement.addEventListener('submit', submitEditProfileForm);
 // Устанавливаем обработчик закрытия окна по крестику
 handleCloseModalByCross(editProfileModalWindow);
+// Кнопка сохранения
+const popupProfileButton = formElement.querySelector('.popup__button');
 
 // Обработчик «отправки» формы при редактировании профиля
 function submitEditProfileForm(evt) {
   evt.preventDefault();
 
-  // Получите значение полей jobInput и nameInput из свойства value
-  profileName.textContent = nameInput.value;
-  profileDescription.textContent = jobInput.value;
-
   // отправляем данные пользователя на сервер
   setUserInfo(nameInput.value, jobInput.value)
-    .then(res => {
-      if (!res.ok) {
-        console.error(res)
-      }
+    .then(() => {
+      // меняем текст кнопки сохранения на время сохранения на сервере
+      popupProfileButton.textContent = 'Сохранение...';
+
+      // Получите значение полей jobInput и nameInput из свойства value
+      profileName.textContent = nameInput.value;
+      profileDescription.textContent = jobInput.value;
+
+      closeModal(editProfileModalWindow);
+    })
+    .catch((err) => console.log(`Ошибка сохранения данных профиля ${err}`))
+    .finally(() => {
+      // восстанавливаем текст кнопки на Сохранить
+      popupProfileButton.textContent = 'Сохранить';
     });
 
-  closeModal(editProfileModalWindow);
 }
 
 
@@ -206,35 +215,33 @@ function submitAddCardForm(evt) {
   // меняем текст кнопки на Сохранение...
   popupCardButton.textContent = 'Сохранение...';
 
-  checkUrl(urlInput.value)
-    .then(() => {
-      // создаем объект карточку на основе значений полей urlInput и description из свойства value
-      const card = {
-        name: description.value,
-        link: urlInput.value
-      }
+  // создаем объект карточку на основе значений полей urlInput и description из свойства value
+  const card = {
+    name: description.value,
+    link: urlInput.value
+  }
 
-      // выгружаем карточку на сервер, закрываем окно, отображаем карточку, полученную как подтверждение от сервера на страницу
-      uploadCard(card).then(cardUploaded => {
-        closeModal(addCardWindow);
+  // выгружаем карточку на сервер, закрываем окно, отображаем карточку, полученную как подтверждение от сервера на страницу
+  uploadCard(card)
+    .then(cardUploaded => {
+      closeModal(addCardWindow);
 
-        // восстанавливаем текст кнопки на Сохранить
-        popupCardButton.textContent = 'Сохранить';
+      placesList.prepend(
+        createCard(
+          cardUploaded,
+          handleDeleteCardBtn, // deleteCard
+          likeCard,
+          handleImageClick,
+          userId
+        )
+      );
 
-        placesList.prepend(
-          createCard(
-            cardUploaded,
-            handleDeleteCardBtn, // deleteCard
-            likeCard,
-            handleImageClick,
-            userId
-          )
-        );
-
-        addCardForm.reset();
-      });
-    }).catch(() => {
-      showInputError(addCardForm, urlInput, 'Введите URL картинки', validationConfig)
+      addCardForm.reset();
+    })
+    .catch((err) => console.log(`Ошибка при сохранении карточки на сервере ${err}`))
+    .finally(() => {
+      // восстанавливаем текст кнопки на Сохранить
+      popupCardButton.textContent = 'Сохранить';
     })
 }
 
@@ -281,29 +288,29 @@ function handleImageClick(cardData) {
 const deletePopup = document.querySelector('.popup.popup_type_delete-card');
 // Устанавливаем обработчик закрытия окна по крестику
 handleCloseModalByCross(deletePopup);
-// ставим слушатель на закрытие с подтверждением
-deletePopup.addEventListener('submit', submitDeleteCardForm);
-// кнопка подтверждения удаления
-const deleteCardButton = deletePopup.querySelector('.popup__button');
 
-function handleDeleteCardBtn(evt) {
-  // получим id карточки, которую собираемся удалить
-  const cardToDeleteId = evt.target.closest('.card').dataset.id;
-  // и поместим его в дата атрибут кнопки закрытия попапа
-  deleteCardButton.dataset.cardId = cardToDeleteId;
-  // открываем попап
+
+// функция удаления карточки
+// вызов в renderCards/createCard, submitAddCardForm/uploadCard/createCard
+function handleDeleteCardBtn(cardData, cardDeleteButton) {
+  // ставим слушатель на закрытие с подтверждением
+  deletePopup.addEventListener('submit', (evt) => {
+    evt.preventDefault();
+    // удаляем карточку на сервере, затем на странице, затем закрываем окно
+    deleteCardFromServer(cardData._id)
+    .then(() => {
+        cardDeleteButton.closest('.card').remove();
+        closeModal(deletePopup);
+      })
+      .catch(err => {
+        // если ошибка
+        console.log(`Ошибка удаления карточки: ${err}`);
+      })
+  });
+
+  // открываем попап подтверждения удаления карточки
   openModal(deletePopup);
 }
-
-function submitDeleteCardForm(evt) {
-  const cardToDeleteId = evt.target.querySelector('.popup__button').dataset.cardId;
-
-  // удаляем карточку на сервере
-  deleteCard(cardToDeleteId);
-
-  closeModal(deletePopup);
-}
-
 
 // обработчик зарытия модального окна по клику на закрывающий крекстик
 function handleCloseModalByCross(modalWindow) {
