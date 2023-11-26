@@ -5,6 +5,9 @@ import { setLikeCard } from '../components/api';
 // Темплейт карточки
 const cardTemplate = document.querySelector('#card-template').content;
 
+// Глобальная переменная для хранения Id карточки и нод узел карточки
+export const cardToDelete = {}
+
 // Функция создания карточки
 // функция, которая принимает в аргументах данные одной карточки и функцию-колбэки для удаления, лайка, открытия изображения, а возвращает подготовленный к выводу элемент карточки
 // функция создания карточки переиспользуется при добавлении карточек из массива и при добавлении новых карточек через модальное окно.
@@ -36,7 +39,13 @@ export function createCard(cardData, handleDeleteCardBtn, likeFunction, imageExp
   // показываем кнопку удаления и устанавливаем обработчик по кнопке удаления
   // если id создателя карточки === id пользователя
   if (cardData.owner._id === userId) {
-    cardDeleteButton.addEventListener('click', () => handleDeleteCardBtn(cardData, cardDeleteButton));
+
+    cardDeleteButton.addEventListener('click', (evt) => {
+      // при клике сохраняем id карточки и нод элемент кнопки удаления
+      cardToDelete.id = cardData._id;
+      cardToDelete.nodeDeleteBtn = cardDeleteButton;
+
+      handleDeleteCardBtn(evt)});
   } else {
     // скрываем кнопку удаления карточки, если карточка создана не пользователем
     cardDeleteButton.classList.add('card__delete-button_inactive');

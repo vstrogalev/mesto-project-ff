@@ -1,5 +1,5 @@
 import './index.css';
-import { createCard, likeCard } from '../components/card';
+import { createCard, likeCard, cardToDelete } from '../components/card';
 import { openModal, closeModal } from '../components/modal';
 import { enableValidation, clearValidation } from '../components/validation';
 import {
@@ -162,12 +162,12 @@ const popupProfileButton = formElement.querySelector('.popup__button');
 // Обработчик «отправки» формы при редактировании профиля
 function submitEditProfileForm(evt) {
   evt.preventDefault();
+  // меняем текст кнопки сохранения на время сохранения на сервере
+  popupProfileButton.textContent = 'Сохранение...';
 
   // отправляем данные пользователя на сервер
   setUserInfo(nameInput.value, jobInput.value)
     .then(() => {
-      // меняем текст кнопки сохранения на время сохранения на сервере
-      popupProfileButton.textContent = 'Сохранение...';
 
       // Получите значение полей jobInput и nameInput из свойства value
       profileName.textContent = nameInput.value;
@@ -288,29 +288,33 @@ function handleImageClick(cardData) {
 const deletePopup = document.querySelector('.popup.popup_type_delete-card');
 // Устанавливаем обработчик закрытия окна по крестику
 handleCloseModalByCross(deletePopup);
-
+// ставим слушатель на закрытие с подтверждением
+deletePopup.addEventListener('submit', submitDeleteCard);
 
 // функция удаления карточки
 // вызов в renderCards/createCard, submitAddCardForm/uploadCard/createCard
-function handleDeleteCardBtn(cardData, cardDeleteButton) {
-  // ставим слушатель на закрытие с подтверждением
-  deletePopup.addEventListener('submit', (evt) => {
-    evt.preventDefault();
-    // удаляем карточку на сервере, затем на странице, затем закрываем окно
-    deleteCardFromServer(cardData._id)
-    .then(() => {
-        cardDeleteButton.closest('.card').remove();
-        closeModal(deletePopup);
-      })
-      .catch(err => {
-        // если ошибка
-        console.log(`Ошибка удаления карточки: ${err}`);
-      })
-  });
+function handleDeleteCardBtn(evt) {
+  evt.preventDefault();
 
   // открываем попап подтверждения удаления карточки
   openModal(deletePopup);
 }
+
+function submitDeleteCard(evt) {
+  evt.preventDefault();
+
+  // удаляем карточку на сервере, затем на странице, затем закрываем окно
+  deleteCardFromServer(cardToDelete.id)
+  .then(() => {
+      cardToDelete.nodeDeleteBtn.closest('.card').remove();
+      closeModal(deletePopup);
+    })
+    .catch(err => {
+      // если ошибка
+      console.log(`Ошибка удаления карточки: ${err}`);
+    })
+}
+
 
 // обработчик зарытия модального окна по клику на закрывающий крекстик
 function handleCloseModalByCross(modalWindow) {
